@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block title %}Enter Passcode{% endblock %}
+{% block page_title %}Protected Quiz{% endblock %}
+{% block page_sub %}This quiz requires a passcode{% endblock %}
+{% block extra_style %}{{ block.super }}
+.wrap{max-width:380px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;outline:none}
+.field input:focus{border-color:#6c63ff}
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <div style="font-size:40px;margin-bottom:14px">🔒</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:6px">{{ quiz.title }}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:22px">Enter the passcode to access this quiz.</div>
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="passcode_submit" value="1">
+      <div class="field"><label>Passcode</label>
+        <input type="text" name="passcode" required autofocus placeholder="Enter passcode"></div>
+      <button class="btn">Unlock →</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

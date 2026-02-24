@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+{% block title %}Create Quiz{% endblock %}
+{% block page_title %}Create Quiz{% endblock %}
+{% block page_sub %}Fill in the details below and click the button{% endblock %}
+{% block extra_style %}{{ block.super }}
+.form-wrap{max-width:620px}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
+.section-title{font-size:15px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.field input,.field textarea{width:100%;padding:10px 14px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:.2s}
+.field input:focus,.field textarea:focus{border-color:#6c63ff}
+.field textarea{resize:vertical;min-height:80px}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+.actions{display:flex;gap:12px;margin-top:6px}
+.btn-big{flex:1;padding:14px;background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff;
+  border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-big:hover{opacity:.9;transform:translateY(-1px)}
+.btn-cancel{padding:14px 24px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:600;transition:.2s}
+.btn-cancel:hover{background:var(--border)}
+.check-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.check-row input[type=checkbox]{width:18px;height:18px;accent-color:#6c63ff;cursor:pointer}
+.check-row label{font-size:14px;font-weight:600;cursor:pointer}
+{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <form method="post" action="{% url 'create_quiz' %}">
+    {% csrf_token %}
+
+    <div class="section">
+      <div class="section-title">📋 Quiz Details</div>
+      <div class="field">
+        <label>Quiz Title *</label>
+        <input type="text" name="title" placeholder="e.g. Python Basics Test" required maxlength="200">
+      </div>
+      <div class="field">
+        <label>Description (optional)</label>
+        <textarea name="description" placeholder="Brief description..."></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">⏱ Timer</div>
+      <div class="field">
+        <label>Time Limit (minutes)</label>
+        <input type="number" name="timer_minutes" value="0" min="0" max="300" style="max-width:140px">
+        <div class="hint">Enter 0 for no time limit. Enter e.g. 30 for a 30-minute countdown.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🔒 Settings</div>
+      <div class="field">
+        <label>Passcode (optional)</label>
+        <input type="text" name="passcode" placeholder="Leave blank for open access" maxlength="20">
+        <div class="hint">Students must enter this to access the quiz.</div>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" name="is_published" id="pub">
+        <label for="pub">Publish immediately (students can take it right away)</label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn-big">Continue to Add Questions →</button>
+      <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

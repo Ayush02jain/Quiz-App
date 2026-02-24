@@ -1,0 +1,143 @@
+{% extends 'layout.html' %}
+{% load filters %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block page_title %}{{ quiz.title }}{% endblock %}
+{% block page_sub %}Quiz Management{% endblock %}
+{% block extra_style %}{{ block.super }}
+.top-btns{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff}
+.btn-outline{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-green{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.btn-red{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-key{color:var(--muted)}
+.q-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.q-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.q-head:hover{background:rgba(255,255,255,.02)}
+.q-badge{width:26px;height:26px;border-radius:7px;background:rgba(108,99,255,.2);color:#a89cf9;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.q-txt{font-size:14px;flex:1}
+.q-pts{font-size:12px;color:var(--muted)}
+.arrow{color:var(--muted);font-size:11px;transition:.2s}
+.q-item.open .arrow{transform:rotate(180deg)}
+.choices-wrap{display:none;padding:0 14px 12px 50px}
+.q-item.open .choices-wrap{display:block}
+.choice-line{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;color:var(--muted)}
+.choice-line.ok{color:#22c55e}
+.c-letter{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:var(--surface);border:1px solid var(--border);flex-shrink:0}
+.choice-line.ok .c-letter{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3);color:#22c55e}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.pub{background:rgba(34,197,94,.15);color:#22c55e}
+.drf{background:rgba(107,114,128,.15);color:#6b7280}
+.share-id{font-size:36px;font-weight:700;color:#6c63ff;text-align:center;padding:12px;letter-spacing:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+{% endblock %}
+{% block content %}
+<div class="top-btns">
+  <a href="{% url 'add_questions' quiz.id %}" class="btn btn-primary">➕ Add Questions</a>
+  <a href="{% url 'edit_quiz' quiz.id %}" class="btn btn-outline">✏️ Edit</a>
+  <a href="{% url 'toggle_publish' quiz.id %}" class="btn {% if quiz.is_published %}btn-red{% else %}btn-green{% endif %}">
+    {% if quiz.is_published %}Unpublish{% else %}Publish{% endif %}
+  </a>
+  {% if quiz.is_published %}<a href="{% url 'take_quiz' quiz.id %}" class="btn btn-outline" target="_blank">▶ Preview</a>{% endif %}
+  <form method="post" action="{% url 'delete_quiz' quiz.id %}" style="margin-left:auto" onsubmit="return confirm('Delete quiz permanently?')">
+    {% csrf_token %}<button class="btn btn-red">🗑 Delete</button>
+  </form>
+</div>
+
+<div class="layout">
+  <div>
+    <div class="card">
+      <div class="card-title">Questions ({{ questions|length }})</div>
+      {% if questions %}
+        {% for q in questions %}
+        <div class="q-item" id="qi{{ q.id }}">
+          <div class="q-head" onclick="toggle({{ q.id }})">
+            <div class="q-badge">{{ q.order }}</div>
+            <div class="q-txt">{{ q.text|truncatechars:90 }}</div>
+            <div class="q-pts">{{ q.marks }}pt</div>
+            <div class="arrow">▾</div>
+          </div>
+          <div class="choices-wrap">
+            {% for c in q.choices.all %}
+            <div class="choice-line {% if c.is_correct %}ok{% endif %}">
+              <div class="c-letter">{{ forloop.counter|letter }}</div>
+              {{ c.text }}{% if c.is_correct %} ✓{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;padding:30px;color:var(--muted)">No questions yet.
+          <a href="{% url 'add_questions' quiz.id %}" style="color:#a89cf9"> Add now →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if attempts %}
+    <div class="card">
+      <div class="card-title">Attempts ({{ attempts|length }})</div>
+      <table>
+        <thead><tr><th>Student</th><th>Score</th><th>%</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for a in attempts %}
+        <tr>
+          <td>{{ a.user.get_full_name|default:a.user.username }}</td>
+          <td>{{ a.score|floatformat:0 }}/{{ a.total_marks|floatformat:0 }}</td>
+          <td style="color:{% if a.percentage >= 75 %}#22c55e{% elif a.percentage >= 50 %}#f59e0b{% else %}#ef4444{% endif %};font-weight:700">
+            {{ a.percentage|floatformat:1 }}%</td>
+          <td style="color:var(--muted)">{{ a.completed_at|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="info-row"><span class="info-key">Status</span>
+        <span class="badge {% if quiz.is_published %}pub{% else %}drf{% endif %}">
+          {% if quiz.is_published %}● Published{% else %}○ Draft{% endif %}</span>
+      </div>
+      <div class="info-row"><span class="info-key">Questions</span><span>{{ questions|length }}</span></div>
+      <div class="info-row"><span class="info-key">Timer</span>
+        <span>{% if quiz.timer_minutes %}{{ quiz.timer_minutes }} min{% else %}None{% endif %}</span>
+      </div>
+      <div class="info-row"><span class="info-key">Passcode</span>
+        <span>{% if quiz.passcode %}🔒 Set{% else %}None{% endif %}</span>
+      </div>
+      <div class="info-row"><span class="info-key">Attempts</span><span>{{ quiz.attempt_count }}</span></div>
+      <div class="info-row"><span class="info-key">Created</span><span style="color:var(--muted)">{{ quiz.created_at|date:"M d, Y" }}</span></div>
+    </div>
+
+    {% if quiz.is_published %}
+    <div class="card">
+      <div class="card-title">Share</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px">Quiz ID</div>
+      <div class="share-id">{{ quiz.id }}</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center">Share this ID with students at <strong style="color:var(--text)">/join/</strong></div>
+      {% if quiz.passcode %}
+      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--muted)">Passcode: <strong style="color:var(--text)">{{ quiz.passcode }}</strong></div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+<script>
+function toggle(id){document.getElementById('qi'+id).classList.toggle('open')}
+</script>
+{% endblock %}

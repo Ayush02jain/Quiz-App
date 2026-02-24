@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load filters %}
+{% block title %}Results — {{ attempt.quiz.title }}{% endblock %}
+{% block extra_style %}
+.top{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;
+  display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:18px;font-weight:700}
+.back{font-size:14px;color:var(--muted);padding:8px 16px;border:1px solid var(--border);border-radius:8px}
+.back:hover{color:var(--text);background:var(--surface2)}
+.body{max-width:760px;margin:0 auto;padding:32px 16px 60px}
+.hero{background:linear-gradient(135deg,#1a1d27,#1c1630);border:1px solid rgba(108,99,255,.2);
+  border-radius:20px;padding:36px;text-align:center;margin-bottom:24px}
+.circle{width:130px;height:130px;border-radius:50%;margin:0 auto 18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid}
+.circle.hi{border-color:#22c55e;background:rgba(34,197,94,.1)}
+.circle.md{border-color:#f59e0b;background:rgba(245,158,11,.1)}
+.circle.lo{border-color:#ef4444;background:rgba(239,68,68,.1)}
+.pct{font-size:38px;font-weight:800;line-height:1}
+.circle.hi .pct{color:#22c55e}.circle.md .pct{color:#f59e0b}.circle.lo .pct{color:#ef4444}
+.pct-lbl{font-size:12px;color:var(--muted);margin-top:2px}
+.result-title{font-size:24px;font-weight:700;margin-bottom:6px}
+.result-sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+.stats-row{display:flex;justify-content:center;gap:36px}
+.stat{text-align:center}
+.stat-n{font-size:22px;font-weight:700}
+.stat-l{font-size:12px;color:var(--muted);margin-top:2px}
+.btns{display:flex;gap:12px;margin-bottom:28px}
+.btn{flex:1;padding:13px;border-radius:10px;font-size:14px;font-weight:700;text-align:center;border:none;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff}
+.btn-outline{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.review-title{font-size:18px;font-weight:700;margin-bottom:14px}
+.a-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px}
+.a-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.a-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0}
+.a-icon.ok{background:rgba(34,197,94,.15)}.a-icon.bad{background:rgba(239,68,68,.1)}
+.a-q{font-size:14px;font-weight:600;line-height:1.4}
+.a-num{font-size:11px;color:var(--muted);margin-bottom:4px}
+.c-line{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
+  font-size:13px;margin-bottom:4px;border:1px solid transparent}
+.c-line.sel-ok{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#22c55e}
+.c-line.sel-bad{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#ef4444}
+.c-line.ans{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.15);color:#22c55e}
+.c-line.plain{color:var(--muted)}
+.c-let{font-weight:700;font-size:12px;min-width:14px}
+.c-note{margin-left:auto;font-size:11px}
+{% endblock %}
+{% block body %}
+<div class="top">
+  <div class="logo">⚡ QuizApp</div>
+  <a href="{% url 'dashboard' %}" class="back">← Dashboard</a>
+</div>
+<div class="body">
+  <div class="hero">
+    <div class="circle {% if attempt.percentage >= 75 %}hi{% elif attempt.percentage >= 50 %}md{% else %}lo{% endif %}">
+      <div class="pct">{{ attempt.percentage|floatformat:0 }}%</div>
+      <div class="pct-lbl">Score</div>
+    </div>
+    <div class="result-title">
+      {% if attempt.percentage >= 75 %}🎉 Excellent!{% elif attempt.percentage >= 50 %}👍 Good Job!{% else %}📚 Keep Practicing!{% endif %}
+    </div>
+    <div class="result-sub">{{ attempt.quiz.title }}</div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n">{{ attempt.score|floatformat:0 }}/{{ attempt.total_marks|floatformat:0 }}</div><div class="stat-l">Points</div></div>
+      <div class="stat"><div class="stat-n">{{ answers|length }}</div><div class="stat-l">Questions</div></div>
+      <div class="stat"><div class="stat-n">{% for a in answers %}{% if a.is_correct %}1{% endif %}{% endfor %}</div><div class="stat-l">Correct</div></div>
+      <div class="stat"><div class="stat-n">{{ attempt.time_taken_seconds }}s</div><div class="stat-l">Time</div></div>
+    </div>
+  </div>
+
+  <div class="btns">
+    <a href="{% url 'join_quiz' %}" class="btn btn-primary">Try Another Quiz</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline">Dashboard</a>
+  </div>
+
+  <div class="review-title">Answer Review</div>
+  {% for a in answers %}
+  <div class="a-card">
+    <div class="a-head">
+      <div class="a-icon {% if a.is_correct %}ok{% else %}bad{% endif %}">{% if a.is_correct %}✓{% else %}✕{% endif %}</div>
+      <div>
+        <div class="a-num">Q{{ forloop.counter }} · {{ a.question.marks }} pt{% if a.question.marks > 1 %}s{% endif %}</div>
+        <div class="a-q">{{ a.question.text }}</div>
+      </div>
+    </div>
+    <div style="padding-left:36px">
+      {% for c in a.question.choices.all %}
+      <div class="c-line
+        {% if c == a.selected_choice and a.is_correct %}sel-ok
+        {% elif c == a.selected_choice and not a.is_correct %}sel-bad
+        {% elif c.is_correct and not a.is_correct %}ans
+        {% else %}plain{% endif %}">
+        <span class="c-let">{{ forloop.counter|letter }}</span>
+        {{ c.text }}
+        {% if c == a.selected_choice %}<span class="c-note">{% if a.is_correct %}✓ Your answer{% else %}✕ Wrong{% endif %}</span>
+        {% elif c.is_correct and not a.is_correct %}<span class="c-note">✓ Correct answer</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

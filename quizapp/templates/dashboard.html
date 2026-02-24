@@ -1,0 +1,76 @@
+{% extends 'layout.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Welcome back, {{ request.user.first_name|default:request.user.username }}! 👋{% endblock %}
+{% block extra_style %}{{ block.super }}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.stat-val{font-size:30px;font-weight:700;margin-top:8px}
+.stat-lbl{font-size:13px;color:var(--muted);margin-top:4px}
+.stat-ico{font-size:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.quiz-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.quiz-row:last-child{border-bottom:none}
+.qname{font-size:14px;font-weight:600}
+.qdesc{font-size:12px;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.published{background:rgba(34,197,94,.15);color:#22c55e}
+.draft{background:rgba(107,114,128,.15);color:#6b7280}
+.pct{font-size:14px;font-weight:700}
+.pct.hi{color:#22c55e}.pct.md{color:#f59e0b}.pct.lo{color:#ef4444}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff}
+.btn-primary:hover{opacity:.9}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+{% endblock %}
+{% block content %}
+<div class="stats">
+  <div class="stat"><div class="stat-ico">📋</div><div class="stat-val">{{ total_quizzes }}</div><div class="stat-lbl">Total Quizzes</div></div>
+  <div class="stat"><div class="stat-ico">✅</div><div class="stat-val">{{ published }}</div><div class="stat-lbl">Published</div></div>
+  <div class="stat"><div class="stat-ico">👥</div><div class="stat-val">{{ total_attempts }}</div><div class="stat-lbl">Total Attempts</div></div>
+  <div class="stat"><div class="stat-ico">⭐</div><div class="stat-val">{{ avg_score }}%</div><div class="stat-lbl">Avg. Score</div></div>
+</div>
+<div class="grid2">
+  <div class="card">
+    <div class="card-title">My Quizzes
+      <a href="{% url 'create_quiz' %}" class="btn btn-primary">+ New</a>
+    </div>
+    {% if quizzes %}
+      {% for q in quizzes %}
+      <div class="quiz-row">
+        <div>
+          <a href="{% url 'quiz_detail' q.id %}" class="qname" style="color:var(--text)">{{ q.title }}</a>
+          <div class="qdesc">{{ q.question_count }} questions{% if q.timer_minutes %} · {{ q.timer_minutes }}m{% endif %}</div>
+        </div>
+        <span class="badge {% if q.is_published %}published{% else %}draft{% endif %}">
+          {% if q.is_published %}Live{% else %}Draft{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty">No quizzes yet.<br><a href="{% url 'create_quiz' %}" style="color:#a89cf9">Create one →</a></div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Recent Results</div>
+    {% if recent_attempts %}
+      {% for a in recent_attempts %}
+      <div class="quiz-row">
+        <div>
+          <a href="{% url 'quiz_results' a.id %}" class="qname" style="color:var(--text)">{{ a.quiz.title }}</a>
+          <div class="qdesc">{{ a.completed_at|date:"M d, Y" }}</div>
+        </div>
+        <span class="pct {% if a.percentage >= 75 %}hi{% elif a.percentage >= 50 %}md{% else %}lo{% endif %}">
+          {{ a.percentage|floatformat:0 }}%
+        </span>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty">No quiz attempts yet.<br><a href="{% url 'join_quiz' %}" style="color:#a89cf9">Join a quiz →</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

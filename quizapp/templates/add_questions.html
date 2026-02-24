@@ -1,0 +1,250 @@
+{% extends 'layout.html' %}
+{% block title %}Add Questions{% endblock %}
+{% block page_title %}Add Questions{% endblock %}
+{% block page_sub %}{{ quiz.title }}{% endblock %}
+{% block extra_style %}{{ block.super }}
+.layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.panel-title{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:var(--text)}
+.field input,.field textarea{width:100%;padding:10px 14px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:.2s}
+.field input:focus,.field textarea:focus{border-color:#6c63ff}
+.field textarea{min-height:80px;resize:vertical}
+.hint-box{background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.2);border-radius:10px;
+  padding:10px 14px;font-size:13px;color:#a89cf9;margin-bottom:16px}
+.choice-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.letter-btn{width:30px;height:30px;border-radius:50%;background:var(--surface2);
+  border:2px solid var(--border);color:var(--muted);font-weight:700;font-size:13px;
+  cursor:pointer;flex-shrink:0;transition:.2s;display:flex;align-items:center;justify-content:center}
+.letter-btn.correct{background:rgba(34,197,94,.2);border-color:#22c55e;color:#22c55e}
+.choice-inp{flex:1;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.choice-inp:focus{border-color:#6c63ff}
+.rm-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px 4px;transition:.2s}
+.rm-btn:hover{color:#ef4444}
+.add-choice{width:100%;padding:9px;background:none;border:1.5px dashed var(--border);
+  border-radius:10px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:14px;transition:.2s}
+.add-choice:hover{border-color:#6c63ff;color:#a89cf9}
+.err{color:#ef4444;font-size:13px;margin-bottom:10px;display:none}
+.add-btn{width:100%;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a4fcf);
+  color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
+.add-btn:hover{opacity:.9}
+.q-item{display:flex;align-items:flex-start;gap:8px;padding:10px;border:1px solid var(--border);
+  border-radius:10px;margin-bottom:8px;background:var(--surface2)}
+.q-num{width:24px;height:24px;border-radius:6px;background:rgba(108,99,255,.2);color:#a89cf9;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.q-text{font-size:13px;color:var(--text);flex:1;line-height:1.4}
+.q-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0}
+.q-del:hover{color:#ef4444}
+.empty{text-align:center;padding:20px;color:var(--muted);font-size:13px}
+.q-count{background:rgba(108,99,255,.2);color:#a89cf9;font-size:12px;font-weight:700;
+  padding:2px 10px;border-radius:20px}
+.done-btn{width:100%;padding:12px;background:rgba(34,197,94,.15);color:#22c55e;
+  border:1px solid rgba(34,197,94,.3);border-radius:10px;font-size:14px;font-weight:700;
+  cursor:pointer;margin-bottom:8px;transition:.2s}
+.done-btn:hover{background:rgba(34,197,94,.25)}
+.back-btn{width:100%;padding:10px;background:var(--surface2);color:var(--muted);
+  border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;transition:.2s}
+.back-btn:hover{color:var(--text)}
+.marks-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.marks-row label{font-size:13px;font-weight:600;white-space:nowrap}
+.marks-row input{width:80px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;color:var(--text);font-size:14px;outline:none}
+{% endblock %}
+{% block content %}
+<div class="layout">
+  <!-- ADD QUESTION FORM -->
+  <div class="panel">
+    <div class="panel-title">➕ Add New Question</div>
+    <div class="hint-box">Click a letter badge (A B C D) to mark it green as the correct answer.</div>
+
+    <div class="field">
+      <label>Question *</label>
+      <textarea id="qText" placeholder="Type your question here..."></textarea>
+    </div>
+
+    <div class="marks-row">
+      <label>Marks:</label>
+      <input type="number" id="qMarks" value="1" min="1" max="10">
+    </div>
+
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px">Choices *</label>
+    <div id="choicesList"></div>
+    <button class="add-choice" type="button" onclick="addChoice()">+ Add another choice</button>
+
+    <div class="err" id="errMsg"></div>
+    <button class="add-btn" type="button" onclick="submitQ()">Add Question</button>
+  </div>
+
+  <!-- QUESTIONS LIST -->
+  <div>
+    <div class="panel" style="position:sticky;top:20px">
+      <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">
+        Questions <span class="q-count" id="qCount">{{ questions|length }}</span>
+      </div>
+      <div id="qList">
+        {% if questions %}
+          {% for q in questions %}
+          <div class="q-item" id="qi-{{ q.id }}">
+            <div class="q-num">{{ q.order }}</div>
+            <div class="q-text">{{ q.text|truncatechars:70 }}</div>
+            <button class="q-del" type="button" onclick="delQ({{ q.id }})">✕</button>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="empty" id="emptyMsg">No questions yet</div>
+        {% endif %}
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <a href="{% url 'quiz_detail' quiz.id %}">
+          <button class="done-btn" type="button">✓ Done — View Quiz</button>
+        </a>
+        <a href="{% url 'dashboard' %}">
+          <button class="back-btn" type="button">← Back to Dashboard</button>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUIZ_ID = {{ quiz.id }};
+const CSRF = '{{ csrf_token }}';
+const LETTERS = ['A','B','C','D','E','F'];
+let choices = [];
+let qCount = {{ questions|length }};
+
+function initChoices() {
+  choices = [
+    {text:'', correct:false},
+    {text:'', correct:false},
+    {text:'', correct:false},
+    {text:'', correct:false},
+  ];
+  renderChoices();
+}
+
+function syncFromDOM() {
+  document.querySelectorAll('.choice-inp').forEach((el, i) => {
+    if (choices[i]) choices[i].text = el.value;
+  });
+}
+
+function renderChoices() {
+  const html = choices.map((c, i) => `
+    <div class="choice-row" id="cr-${i}">
+      <button type="button" class="letter-btn ${c.correct ? 'correct' : ''}"
+        onclick="toggleCorrect(${i})">${LETTERS[i]}</button>
+      <input class="choice-inp" type="text" value="${escHtml(c.text)}"
+        placeholder="Choice ${LETTERS[i]}" id="ci-${i}"
+        oninput="choices[${i}].text=this.value">
+      ${choices.length > 2 ? `<button type="button" class="rm-btn" onclick="removeChoice(${i})">×</button>` : ''}
+    </div>`).join('');
+  document.getElementById('choicesList').innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleCorrect(i) {
+  syncFromDOM();
+  choices[i].correct = !choices[i].correct;
+  renderChoices();
+}
+
+function addChoice() {
+  if (choices.length >= 6) return;
+  syncFromDOM();
+  choices.push({text:'', correct:false});
+  renderChoices();
+  document.getElementById(`ci-${choices.length-1}`).focus();
+}
+
+function removeChoice(i) {
+  if (choices.length <= 2) return;
+  syncFromDOM();
+  choices.splice(i, 1);
+  renderChoices();
+}
+
+function showErr(msg) {
+  const e = document.getElementById('errMsg');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+function clearErr() {
+  const e = document.getElementById('errMsg');
+  e.style.display = 'none';
+}
+
+async function submitQ() {
+  syncFromDOM();
+  clearErr();
+
+  const text  = document.getElementById('qText').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value) || 1;
+
+  if (!text) { showErr('Please enter a question.'); return; }
+
+  const filled = choices.filter(c => c.text.trim());
+  if (filled.length < 2) { showErr('Add at least 2 choices.'); return; }
+  if (!filled.some(c => c.correct)) { showErr('Click a letter badge to mark the correct answer (it turns green).'); return; }
+
+  try {
+    const res = await fetch(`/quiz/${QUIZ_ID}/questions/`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({
+        action: 'add_question', text, marks,
+        choices: filled.map(c => ({text: c.text.trim(), is_correct: c.correct}))
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      qCount = data.count;
+      document.getElementById('qCount').textContent = qCount;
+      const empty = document.getElementById('emptyMsg');
+      if (empty) empty.remove();
+      const div = document.createElement('div');
+      div.className = 'q-item'; div.id = `qi-${data.question_id}`;
+      div.innerHTML = `<div class="q-num">${qCount}</div>
+        <div class="q-text">${escHtml(text.substring(0,70))}${text.length>70?'...':''}</div>
+        <button type="button" class="q-del" onclick="delQ(${data.question_id})">✕</button>`;
+      document.getElementById('qList').appendChild(div);
+      document.getElementById('qText').value = '';
+      document.getElementById('qMarks').value = 1;
+      initChoices();
+      document.getElementById('qText').focus();
+    } else {
+      showErr(data.error || 'Failed. Try again.');
+    }
+  } catch(e) {
+    showErr('Network error. Is the server running?');
+    console.error(e);
+  }
+}
+
+async function delQ(id) {
+  if (!confirm('Delete this question?')) return;
+  const res = await fetch(`/quiz/${QUIZ_ID}/questions/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body:JSON.stringify({action:'delete_question',question_id:id})
+  });
+  const data = await res.json();
+  if (data.success) {
+    document.getElementById(`qi-${id}`).remove();
+    qCount--;
+    document.getElementById('qCount').textContent = qCount;
+    document.querySelectorAll('.q-num').forEach((el,i)=>el.textContent=i+1);
+    if (qCount===0) document.getElementById('qList').innerHTML='<div class="empty" id="emptyMsg">No questions yet</div>';
+  }
+}
+
+initChoices();
+</script>
+{% endblock %}

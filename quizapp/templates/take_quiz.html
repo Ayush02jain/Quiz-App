@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load filters %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block extra_style %}
+.top{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.quiz-name{font-size:18px;font-weight:700}
+.timer{background:var(--surface2);border:1px solid var(--border);border-radius:50px;
+  padding:10px 20px;font-size:20px;font-weight:700;min-width:90px;text-align:center}
+.timer.warn{color:#f59e0b}.timer.danger{color:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.prog{height:3px;background:var(--surface2)}
+.prog-fill{height:100%;background:linear-gradient(90deg,#6c63ff,#c2185b);transition:width .3s}
+.body{max-width:700px;margin:0 auto;padding:32px 16px 100px}
+.q-block{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:24px;margin-bottom:14px}
+.q-label{font-size:12px;color:#a89cf9;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.q-text{font-size:17px;font-weight:600;margin-bottom:18px;line-height:1.5}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.choice{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border);
+  border-radius:11px;cursor:pointer;transition:.15s;background:var(--surface2);user-select:none}
+.choice:hover{border-color:rgba(108,99,255,.4);background:rgba(108,99,255,.05)}
+.choice input{display:none}
+.choice.picked{border-color:#6c63ff;background:rgba(108,99,255,.12)}
+.c-badge{width:28px;height:28px;border-radius:7px;background:var(--surface);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.choice.picked .c-badge{background:rgba(108,99,255,.3);border-color:#6c63ff;color:#a89cf9}
+.c-text{font-size:14px;color:var(--text)}
+.footer{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);
+  padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.answered-info{font-size:14px;color:var(--muted)}
+.answered-info strong{color:var(--text)}
+.nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px}
+.dot{width:28px;height:28px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.dot.done{background:rgba(108,99,255,.2);border-color:#6c63ff;color:#a89cf9}
+.submit-btn{padding:12px 36px;background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff;
+  border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+.submit-btn:hover{opacity:.9}
+{% endblock %}
+{% block body %}
+<div class="top">
+  <div class="quiz-name">{{ quiz.title }}</div>
+  {% if timer_seconds > 0 %}
+  <div class="timer" id="timerEl">--:--</div>
+  {% else %}
+  <div style="font-size:13px;color:var(--muted)">No time limit</div>
+  {% endif %}
+</div>
+<div class="prog"><div class="prog-fill" id="progBar" style="width:0"></div></div>
+
+<div class="body">
+  <form method="post" action="{% url 'submit_quiz' quiz.id %}" id="quizForm">
+    {% csrf_token %}
+    <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+    <input type="hidden" name="time_taken" id="timeTaken" value="0">
+
+    {% for q in questions %}
+    <div class="q-block" id="qb{{ q.id }}">
+      <div class="q-label">Question {{ forloop.counter }} of {{ questions|length }} · {{ q.marks }} point{% if q.marks > 1 %}s{% endif %}</div>
+      <div class="q-text">{{ q.text }}</div>
+      <div class="choices">
+        {% for c in q.choices.all %}
+        <label class="choice" id="ch{{ q.id }}_{{ c.id }}" onclick="pick('{{ q.id }}','{{ c.id }}')">
+          <input type="radio" name="q_{{ q.id }}" value="{{ c.id }}">
+          <div class="c-badge">{{ forloop.counter|letter }}</div>
+          <div class="c-text">{{ c.text }}</div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </form>
+</div>
+
+<div class="footer">
+  <div class="nav-dots">
+    {% for q in questions %}
+    <a href="#qb{{ q.id }}" class="dot" id="dot{{ q.id }}">{{ forloop.counter }}</a>
+    {% endfor %}
+  </div>
+  <div class="answered-info"><strong id="ansCount">0</strong>/{{ questions|length }} answered</div>
+  <button class="submit-btn" onclick="doSubmit()">Submit Quiz →</button>
+</div>
+
+<script>
+const TOTAL = {{ questions|length }};
+let elapsed = 0, remaining = {{ timer_seconds }};
+const picked = {};
+
+function pick(qid, cid) {
+  document.querySelectorAll(`[id^="ch${qid}_"]`).forEach(el => el.classList.remove('picked'));
+  document.getElementById(`ch${qid}_${cid}`).classList.add('picked');
+  document.querySelector(`input[name="q_${qid}"][value="${cid}"]`).checked = true;
+  picked[qid] = cid;
+  document.getElementById('dot'+qid).classList.add('done');
+  const count = Object.keys(picked).length;
+  document.getElementById('ansCount').textContent = count;
+  document.getElementById('progBar').style.width = (count/TOTAL*100)+'%';
+}
+
+setInterval(()=>{ elapsed++; document.getElementById('timeTaken').value=elapsed; }, 1000);
+
+{% if timer_seconds > 0 %}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+const tel = document.getElementById('timerEl');
+tel.textContent = fmt(remaining);
+const tmr = setInterval(()=>{
+  remaining--;
+  document.getElementById('timeTaken').value = elapsed;
+  tel.textContent = fmt(remaining);
+  if(remaining<=60) tel.className='timer warn';
+  if(remaining<=10) tel.className='timer danger';
+  if(remaining<=0){ clearInterval(tmr); alert('Time is up!'); document.getElementById('quizForm').submit(); }
+},1000);
+{% endif %}
+
+function doSubmit(){
+  const n = Object.keys(picked).length;
+  if(n < TOTAL && !confirm(`${TOTAL-n} question(s) unanswered. Submit anyway?`)) return;
+  document.getElementById('timeTaken').value = elapsed;
+  document.getElementById('quizForm').submit();
+}
+</script>
+{% endblock %}

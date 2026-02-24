@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+{% block title %}Edit Quiz{% endblock %}
+{% block page_title %}Edit Quiz{% endblock %}
+{% block page_sub %}{{ quiz.title }}{% endblock %}
+{% block extra_style %}{{ block.super }}
+.wrap{max-width:580px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.field input,.field textarea{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.field input:focus,.field textarea:focus{border-color:#6c63ff}
+.field textarea{min-height:80px;resize:vertical}
+.check-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--border);margin-top:8px}
+.check-row input{width:18px;height:18px;accent-color:#6c63ff}
+.actions{display:flex;gap:12px;margin-top:20px}
+.btn{padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff;flex:1}
+.btn-outline{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="field"><label>Title *</label>
+        <input type="text" name="title" value="{{ quiz.title }}" required></div>
+      <div class="field"><label>Description</label>
+        <textarea name="description">{{ quiz.description }}</textarea></div>
+      <div class="field"><label>Timer (minutes, 0 = none)</label>
+        <input type="number" name="timer_minutes" value="{{ quiz.timer_minutes }}" min="0" max="300" style="max-width:140px"></div>
+      <div class="field"><label>Passcode (optional)</label>
+        <input type="text" name="passcode" value="{{ quiz.passcode }}" placeholder="Leave blank for open access"></div>
+      <div class="check-row">
+        <input type="checkbox" name="is_published" id="pub" {% if quiz.is_published %}checked{% endif %}>
+        <label for="pub" style="font-size:14px;font-weight:600;cursor:pointer">Published</label>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'quiz_detail' quiz.id %}"><button type="button" class="btn btn-outline">Cancel</button></a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

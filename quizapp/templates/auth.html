@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Login / Sign Up{% endblock %}
+{% block extra_style %}
+body{
+display:flex;align-items:center;justify-content:center;min-height:100vh;
+background:url("{% static 'images/backgroung_image.png' %}") center/cover no-repeat fixed;
+position:relative;
+}
+body::before{
+content:'';
+position:fixed;inset:0;
+background:linear-gradient(135deg,rgba(124,77,255,0.55) 0%,rgba(194,24,91,0.50) 50%,rgba(201,122,58,0.45) 100%);
+backdrop-filter:blur(2px);
+z-index:0;
+}
+.card{position:relative;z-index:1;background:#fff;border-radius:20px;padding:36px;width:440px;max-width:calc(100vw -
+32px);
+box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.tabs{display:flex;background:#f3f4f6;border-radius:50px;padding:4px;margin-bottom:28px;gap:4px}
+.tab{flex:1;padding:11px;border:none;border-radius:50px;font-size:14px;font-weight:600;
+cursor:pointer;background:transparent;color:#6b7280;transition:.2s}
+.tab.active{background:#111;color:#fff}
+.form-title{font-size:22px;font-weight:700;color:#111;text-align:center;margin-bottom:22px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px}
+.field input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;
+font-size:14px;color:#111;outline:none;transition:.2s}
+.field input:focus{border-color:#6c63ff;box-shadow:0 0 0 3px rgba(108,99,255,.1)}
+.btn-submit{width:100%;padding:13px;background:#111;border:none;border-radius:50px;
+color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:.2s}
+.btn-submit:hover{background:#6c63ff}
+.err{color:#ef4444;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#fef2f2;
+border-radius:8px}
+{% endblock %}
+{% block body %}
+<div class="card">
+  <div class="tabs">
+    <button class="tab {% if not request.POST.action or request.POST.action == 'signup' %}active{% endif %}"
+      onclick="show('signup')">Sign up</button>
+    <button class="tab {% if request.POST.action == 'login' %}active{% endif %}" onclick="show('login')">Log in</button>
+  </div>
+
+  {% if messages %}{% for m in messages %}<div class="err">{{ m }}</div>{% endfor %}{% endif %}
+
+  <!-- SIGN UP -->
+  <div id="signup-panel" style="display:{% if request.POST.action == 'login' %}none{% else %}block{% endif %}">
+    <div class="form-title">Create Account</div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="signup">
+      <div class="row">
+        <div class="field"><label>First Name</label>
+          <input type="text" name="first_name" value="{{ request.POST.first_name }}" required placeholder="John">
+        </div>
+        <div class="field"><label>Last Name</label>
+          <input type="text" name="last_name" value="{{ request.POST.last_name }}" required placeholder="Doe">
+        </div>
+      </div>
+      <div class="field"><label>Email</label>
+        <input type="email" name="email" value="{{ request.POST.email }}" required placeholder="you@email.com">
+      </div>
+      <div class="field"><label>Password</label>
+        <input type="password" name="password1" required placeholder="Min 6 characters">
+      </div>
+      <div class="field"><label>Confirm Password</label>
+        <input type="password" name="password2" required placeholder="Repeat password">
+      </div>
+      <button class="btn-submit">Sign Up</button>
+    </form>
+  </div>
+
+  <!-- LOG IN -->
+  <div id="login-panel" style="display:{% if request.POST.action == 'login' %}block{% else %}none{% endif %}">
+    <div class="form-title">Welcome Back</div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="login">
+      <div class="field"><label>Email</label>
+        <input type="email" name="email" required placeholder="you@email.com" autofocus>
+      </div>
+      <div class="field"><label>Password</label>
+        <input type="password" name="password" required placeholder="Your password">
+      </div>
+      <button class="btn-submit">Log In</button>
+    </form>
+  </div>
+</div>
+<script>
+  function show(tab) {
+    document.getElementById('signup-panel').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('login-panel').style.display = tab === 'login' ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'signup') || (i === 1 && tab === 'login')));
+  }
+</script>
+{% endblock %}

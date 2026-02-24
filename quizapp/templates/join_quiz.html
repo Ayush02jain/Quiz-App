@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+{% block title %}Join Quiz{% endblock %}
+{% block page_title %}Join a Quiz{% endblock %}
+{% block page_sub %}Enter the Quiz ID given by your host{% endblock %}
+{% block extra_style %}{{ block.super }}
+.wrap{max-width:400px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+.icon{font-size:44px;margin-bottom:14px;display:block}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input{width:100%;padding:16px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:28px;font-weight:700;text-align:center;
+  letter-spacing:4px;outline:none}
+.field input:focus{border-color:#6c63ff}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff;
+  border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <span class="icon">🎯</span>
+    <form method="post">{% csrf_token %}
+      <div class="field"><label>Quiz ID</label>
+        <input type="number" name="quiz_id" placeholder="000" required autofocus></div>
+      <button class="btn">Join Quiz →</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'layout.html' %}
+{% block title %}My Quizzes{% endblock %}
+{% block page_title %}My Quizzes{% endblock %}
+{% block page_sub %}{{ quizzes|length }} quiz{% if quizzes|length != 1 %}zes{% endif %} created{% endblock %}
+{% block extra_style %}{{ block.super }}
+.top-row{display:flex;justify-content:flex-end;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#5a4fcf);color:#fff}
+.btn-red{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.btn:hover{opacity:.85}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:12px 16px;background:var(--surface2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.01)}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.pub{background:rgba(34,197,94,.15);color:#22c55e}.drf{background:rgba(107,114,128,.15);color:#6b7280}
+.act{display:flex;gap:6px}
+.sm-btn{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:.15s;text-decoration:none}
+.sm-view{background:rgba(108,99,255,.15);color:#a89cf9}.sm-edit{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}.sm-del{background:rgba(239,68,68,.1);color:#ef4444}
+.sm-btn:hover{opacity:.8}
+.empty{text-align:center;padding:60px;color:var(--muted)}
+{% endblock %}
+{% block content %}
+<div class="top-row"><a href="{% url 'create_quiz' %}" class="btn btn-primary">+ Create Quiz</a></div>
+{% if quizzes %}
+<div class="card">
+  <table>
+    <thead><tr><th>Quiz</th><th>Status</th><th>Questions</th><th>Timer</th><th>Attempts</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for q in quizzes %}
+    <tr>
+      <td><a href="{% url 'quiz_detail' q.id %}" style="font-weight:600;color:var(--text)">{{ q.title }}</a></td>
+      <td><span class="badge {% if q.is_published %}pub{% else %}drf{% endif %}">{% if q.is_published %}Live{% else %}Draft{% endif %}</span></td>
+      <td>{{ q.question_count }}</td>
+      <td>{% if q.timer_minutes %}{{ q.timer_minutes }}m{% else %}—{% endif %}</td>
+      <td>{{ q.attempt_count }}</td>
+      <td><div class="act">
+        <a href="{% url 'quiz_detail' q.id %}" class="sm-btn sm-view">View</a>
+        <a href="{% url 'add_questions' q.id %}" class="sm-btn sm-edit">+Q</a>
+        <form method="post" action="{% url 'delete_quiz' q.id %}" style="display:inline" onsubmit="return confirm('Delete?')">
+          {% csrf_token %}<button class="sm-btn sm-del">Del</button>
+        </form>
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">No quizzes yet.<br><a href="{% url 'create_quiz' %}" style="color:#a89cf9">Create your first quiz →</a></div>
+{% endif %}
+{% endblock %}
