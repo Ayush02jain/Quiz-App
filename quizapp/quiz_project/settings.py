@@ -40,6 +40,16 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Vercel-specific: SQLite must be in /tmp to be writable
+import shutil
+if 'VERCEL' in os.environ:
+    tmp_db = Path('/tmp/db.sqlite3')
+    original_db = BASE_DIR / 'db.sqlite3'
+    if not tmp_db.exists() and original_db.exists():
+        shutil.copy2(original_db, tmp_db)
+    DATABASES['default']['NAME'] = tmp_db
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
